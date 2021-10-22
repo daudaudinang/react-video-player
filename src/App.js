@@ -22,6 +22,9 @@ const format = (seconds) => {
 }
 
 let count = 0;
+var hls = null;
+var dash = null;
+var setting = null;
 
 function App() {
   const [state, setState] = useState({
@@ -37,6 +40,7 @@ function App() {
   const [timeDisplayFormat, setTimeDisplayFormat] = useState("normal");
   const [bookmarks, setBookmarks] = useState([]);
   const [activePip, setActivePip] = useState(false);
+  const [quality_array, setQualityArray] = useState([]);
 
   const playerRef = useRef(null);
   const containerRef = useRef(null);
@@ -45,6 +49,7 @@ function App() {
 
   const togglePlay = () => {
     setState({...state, playing: !state.playing});
+    // dash.setQualityFor("video", dash.getQualityFor("video") + 1, true);
   }
 
   const handleRewind = () => {
@@ -73,6 +78,14 @@ function App() {
     })
   }
 
+  const changeQuality = (index) => {
+    if(hls && hls.currentLevel !== index) hls.currentLevel = index;
+    else if(dash && dash.getQualityFor("video") !== index) {
+      dash.getSettings().streaming.abr.autoSwitchBitrate.video = false;
+      dash.setQualityFor("video", index, false);
+    }
+  }
+
   const toggleFullScreen = () => {
     setState({
       ...state, fullScreen: !state.fullScreen
@@ -81,13 +94,14 @@ function App() {
   }
 
   const handleProgress = (progress) => {
+    // console.log(dash.getQualityFor("video"));
+
     if(count > 3){
       controlsRef.current.style.visibility = "hidden";
       count = 0;
     }
 
     if(controlsRef.current.style.visibility == "visible") {
-      console.log(count);
       count = count + 1;
     }
 
@@ -125,7 +139,7 @@ function App() {
     const ctx = canvas.getContext("2d");
 
     // Cần tìm hiểu thêm:
-    ctx.drawImage(playerRef.current.getInternalPlayer(), 0, 0, canvas.width, canvas.height); 
+    ctx.drawImage(playerRef.current.gethls(), 0, 0, canvas.width, canvas.height); 
 
     const imageUrl = canvas.toDataURL();
     canvas.width = 0;
@@ -149,6 +163,37 @@ function App() {
     setActivePip(!activePip);
   }
 
+  const handleReady = () => {
+    hls = playerRef.current.getInternalPlayer('hls');
+    dash = playerRef.current.getInternalPlayer('dash');
+    // console.log(playerRef.current.getInternalPlayer('dash'));
+    
+    if(hls){
+      const level_array = hls.levels.map((one) => {
+        return parseInt(one.attrs.RESOLUTION.split("x")[1]);
+      });
+      console.log(hls.firstLevel);
+      setQualityArray(level_array);
+      hls.autoLevelEnabled = true;
+      hls.autoLevelCapping = -1;
+    }
+
+    if(dash) {
+      setting = dash.getSettings();
+      setting.streaming.abr.useDefaultABRRules = false;
+      const level_array = dash.getTracksFor("video")[0].bitrateList.map((one) => {
+        return parseInt(one.height);
+      });
+      setQualityArray(level_array);
+      setting.streaming.bufferTimeAtTopQuality = 10;
+      setting.streaming.bufferTimeAtTopQualityLongForm = 15;
+      setting.streaming.stableBufferTime = 10;
+      setting.streaming.fastSwitchEnabled = true;
+      dash.updateSettings(setting);
+      // dash.getSettings().streaming.fastSwitchEnabled = true;
+    }
+  }
+
   const currentTime = playerRef.current ? playerRef.current.getCurrentTime() : "00:00";
   const duration = playerRef.current ? playerRef.current.getDuration() : "00:00";
   
@@ -161,7 +206,6 @@ function App() {
         ref={containerRef} 
         className="video-container"
         onMouseMove={handleMouseMove}
-        onClick={togglePlay}
         // onMouseLeave={hanldeMouseLeave}
       >
         <div className="video-wrapper">
@@ -170,12 +214,13 @@ function App() {
             width="inherit"
             height="inherit"
             // url="tos-teaser.mp4"
-            url="https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd"
+            url="http://localhost:80/upload/admin@admin/output/1634880037120_yt5s.mp4.mpd"
             controls={false}
             playing={state.playing}
             muted={state.muted}
             volume={state.volume}
             playbackRate={state.playbackRate}
+            onReady={handleReady}
             onProgress={handleProgress}
             onEnded={handleEnded}
             pip={activePip}
@@ -194,6 +239,7 @@ function App() {
             changeVolume={changeVolume}
             playbackRate={state.playbackRate}
             changePlaybackRate={changePlaybackRate}
+            changeQuality={changeQuality}
             fullScreen={state.fullScreen}
             toggleFullScreen={toggleFullScreen}
             played={state.played}
@@ -205,6 +251,7 @@ function App() {
             addBookmark={addBookmark}
             toggleActivePip={toggleActivePip}
             activePip={activePip}
+            quality_array={quality_array}
           />
         </div>
       </div>

@@ -96,6 +96,7 @@ export default forwardRef((props, ref) => {
       changeVolume, 
       playbackRate, 
       changePlaybackRate, 
+      changeQuality,
       fullScreen, 
       toggleFullScreen,
       played,
@@ -105,24 +106,37 @@ export default forwardRef((props, ref) => {
       totalDuration,
       onChangeDisplayFormat,
       addBookmark,
-      activePip,
+      quality_array,
       toggleActivePip
     } = props;
 
     const classes = useStyles();
 
-    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [anchorEl1, setAnchorEl1] = React.useState(null);
   
-    const handlePopover = (event) => {
-      setAnchorEl(event.currentTarget);
+    const handlePopover1 = (event) => {
+      setAnchorEl1(event.currentTarget);
     };
   
-    const handleClose = () => {
-      setAnchorEl(null);
+    const handleClose1 = () => {
+      setAnchorEl1(null);
     };
   
-    const open = Boolean(anchorEl);
-    const id = open ? 'playbackrate-popover' : undefined;
+    const open1 = Boolean(anchorEl1);
+    const id1 = open1 ? 'playbackrate-popover' : undefined;
+
+    const [anchorEl2, setAnchorEl2] = React.useState(null);
+  
+    const handlePopover2 = (event) => {
+      setAnchorEl2(event.currentTarget);
+    };
+  
+    const handleClose2 = () => {
+      setAnchorEl2(null);
+    };
+  
+    const open2 = Boolean(anchorEl2);
+    const id2 = open2 ? 'playbackrate-popover' : undefined;
 
     return (
         <div className="control-wrapper" ref={ref}>
@@ -178,7 +192,7 @@ export default forwardRef((props, ref) => {
                 </div>
                 <div className="right-container">
                 <IconButton
-                    onClick={handlePopover}
+                    onClick={handlePopover1}
                     variant="text"
                     className={classes.bottomIcons}
                 >
@@ -186,10 +200,10 @@ export default forwardRef((props, ref) => {
                 </IconButton>
 
                 <Popover
-                    id={id}
-                    open={open}
-                    anchorEl={anchorEl}
-                    onClose={handleClose}
+                    id={id1}
+                    open={open1}
+                    anchorEl={anchorEl1}
+                    onClose={handleClose1}
                     anchorOrigin={{
                     vertical: "top",
                     horizontal: "center",
@@ -201,16 +215,46 @@ export default forwardRef((props, ref) => {
                 >
                     <Grid container direction="column-reverse">
                     {[0.5, 1, 1.5, 2].map((rate, index) => (
-                        <IconButton key={index} onClick={() => changePlaybackRate(rate)} variant="text" className={classes.bottomIcons}>
-                          <Typography style={{color: "#ffffff"}}>{rate}X</Typography>
+                        <IconButton key={index} onClick={() => {changePlaybackRate(rate);handleClose1();}} variant="text" className={classes.bottomIcons}>
+                          <Typography style={{color: "#fcba03"}}>{rate}X</Typography>
                         </IconButton>
                     ))}
                     </Grid>
                 </Popover>
                 
-                  <IconButton onClick = {toggleActivePip} className={classes.bottomIcons} aria-label="pip">
-                      <PictureInPictureAltIcon style={{color: "#ffffff"}}/>
-                  </IconButton>
+                <IconButton onClick = {toggleActivePip} className={classes.bottomIcons} aria-label="pip">
+                    <PictureInPictureAltIcon style={{color: "#ffffff"}}/>
+                </IconButton>
+                
+                <IconButton
+                  onClick={handlePopover2}
+                  variant="text"
+                  className={classes.bottomIcons}
+                >
+                  <HighQualityIcon style={{color: "#ffffff"}}/>
+                </IconButton>
+                <Popover
+                    id={id2}
+                    open={open2}
+                    anchorEl={anchorEl2}
+                    onClose={handleClose2}
+                    anchorOrigin={{
+                    vertical: "top",
+                    horizontal: "center",
+                    }}
+                    transformOrigin={{
+                    vertical: "bottom",
+                    horizontal: "center",
+                    }}
+                >
+                    <Grid container direction="column-reverse">
+                    {quality_array.map((quality, index) => (
+                        <IconButton key={index} onClick={() => {changeQuality(index); handleClose2();}} variant="text" className={classes.bottomIcons}>
+                          <Typography style={{color:"#fcba03"}}>{quality}p</Typography>
+                        </IconButton>
+                    ))}
+                    </Grid>
+                </Popover>
 
                 <IconButton onClick={toggleFullScreen}className={classes.bottomIcons} aria-label="fullscreen">
                     {fullScreen ? <FullscreenExitIcon style={{color: "#ffffff"}}/> : <FullscreenIcon style={{color: "#ffffff"}}/>}
